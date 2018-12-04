@@ -1,10 +1,10 @@
 require('babel-polyfill')
 
-const crypto = require(`crypto`)
-const stringify = require(`json-stringify-safe`)
+const axios = require('axios')
 const fetch = require(`./fetch`)
 const normalize = require(`./normalize`)
 const objectRef = require(`./helpers`).objectRef
+const forEachAsync = require('./helpers').forEachAsync
 
 // const typePrefix = `thirdParty__`
 
@@ -16,9 +16,8 @@ exports.sourceNodes = async ({
   typePrefix,
   url,
   method,
-  headers,
+  headers = {},
   data,
-  idField = `id`,
   localSave = false,
   skipCreateNode = false,
   path,
@@ -28,47 +27,88 @@ exports.sourceNodes = async ({
   name,
   entityLevel,
   schemaType,
+  entitiesArray = [{}],
   params = {},
   verboseOutput = false
 }) => {
+  //store the attributes in an object to avoid naming conflicts
+  const attributes = {typePrefix, url, method, headers, data, localSave, skipCreateNode, path, auth, params, payloadKey, name, entityLevel, schemaType}
   const { createNode } = boundActionCreators;
 
   // If true, output some info as the plugin runs
   let verbose = verboseOutput
 
-  // Create an entity type from prefix and name supplied by user
-  let entityType = `${typePrefix}${name}`
-  // console.log(`entityType: ${entityType}`);
+  let authorization
+  if(auth0Config) {
+    console.time('\nAuthenticate user');
+    // Make API request.
+    try {
+      const loginResponse = await axios(auth0Config);
 
-  // Fetch the data
-  let entities = await fetch({url, method, headers, data, name, localSave, path, payloadKey, auth, auth0Config, params, verbose, reporter})
-
-  // Interpolate entities from nested resposne
-  if (entityLevel) {
-    entities = objectRef(entities, entityLevel)
+      if (loginResponse.hasOwnProperty('data')) {
+        authorization = 'Bearer ' + loginResponse.data.id_token;
+      }
+    } catch (error) {
+      console.error('\nEncountered authentication error: ' + error);
+    }
+    console.timeEnd('\nAuthenticate user');
   }
 
-  // If entities is a single object, add to array to prevent issues with creating nodes
-  if(entities && !Array.isArray(entities)) {
-    entities = [entities]
-  }
+  await forEachAsync(entitiesArray, async (entity) => {
 
-  // console.log(`save: `, localSave);
-  // console.log(`entities: `, entities.data);
+    // default to the general properties for any props not provided
 
-  // Skip node creation if the goal is to only download the data to json files
-  if(skipCreateNode) {
-    return
-  }
+    const typePrefix = entity.typePrefix ? entity.typePrefix : attributes.typePrefix
+    const url = entity.url ? entity.url : attributes.url
+    const method = entity.method ? entity.method : attributes.method
+    const headers = entity.headers ? entity.headers : attributes.headers
+    const data = entity.data ? entity.data : attributes.data
+    const localSave = entity.localSave ? entity.localSave : attributes.localSave
+    const skipCreateNode = entity.skipCreateNode ? entity.skipCreateNode : attributes.skipCreateNode
+    const path = entity.path ? entity.path : attributes.path
+    const auth = entity.auth ? entity.auth : attributes.auth
+    const params = entity.params ? entity.params : attributes.params
+    const payloadKey = entity.payloadKey ? entity.payloadKey : attributes.payloadKey
+    const name = entity.name ? entity.name : attributes.name
+    const entityLevel = entity.entityLevel ? entity.entityLevel : attributes.entityLevel 
+    const schemaType = entity.schemaType ? entity.schemaType : attributes.schemaType
 
-  // Generate the nodes
-  normalize.createNodesFromEntities({
-      entities,
-      entityType,
-      schemaType,
-      createNode,
-      createNodeId,
-      reporter})
+    if (authorization) headers.Authorization = authorization
+    // Create an entity type from prefix and name supplied by user
+    let entityType = `${typePrefix}${name}`
+    // console.log(`entityType: ${entityType}`);
+
+    // Fetch the data
+    let entities = await fetch({url, method, headers, data, name, localSave, path, payloadKey, auth, params, verbose, reporter})
+
+    // Interpolate entities from nested resposne
+    if (entityLevel) {
+      entities = objectRef(entities, entityLevel)
+    }
+
+    // If entities is a single object, add to array to prevent issues with creating nodes
+    if(entities && !Array.isArray(entities)) {
+      entities = [entities]
+    }
+
+    // console.log(`save: `, localSave);
+    // console.log(`entities: `, entities.data);
+
+    // Skip node creation if the goal is to only download the data to json files
+    if(skipCreateNode) {
+      return
+    }
+
+    // Generate the nodes
+    normalize.createNodesFromEntities({
+        entities,
+        entityType,
+        schemaType,
+        createNode,
+        createNodeId,
+        reporter})
+
+    })
 
   // We're done, return.
   return
