@@ -102,7 +102,7 @@ plugins: [
 
       // Optionally save the JSON data to a file locally
       // Default is false
-      localSave: true,
+      localSave: false,
 
       //  Required folder path where the data should be saved if using localSave option
       //  This folder must already exist
@@ -115,7 +115,7 @@ plugins: [
       // Optionally skip creating nodes in graphQL.  Use this if you only want
       // The data to be saved locally
       // Default is false
-      skipCreateNode: true, // skip import to graphQL, only use if localSave is all you want
+      skipCreateNode: false, // skip import to graphQL, only use if localSave is all you want
       
       // Pass an array containing any number of the entity configuration properties (except verbose, auth0Config),
       // any not specified are defaulted to the general properties that are specified 
