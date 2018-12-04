@@ -24,6 +24,11 @@ Please checkout version `2.0.0` or `next`
 npm install --save gatsby-source-apiserver@next
 ```
 
+## Change logs
+
+- `2.1.0`: Support multiple entities for multiple api servers, pls take a look at attribute `entitiesArray`
+- `2.0.0`: Support gatsby-v2
+
 ## How to use
 
 ```javascript
