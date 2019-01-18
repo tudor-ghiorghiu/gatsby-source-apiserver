@@ -26,7 +26,10 @@ npm install --save gatsby-source-apiserver@next
 
 ## Change logs
 
-- `2.1.0`: Support multiple entities for multiple api servers, pls take a look at attribute `entitiesArray`
+- `2.1.0`:
+   - Support multiple entities for multiple api servers, pls take a look at attribute `entitiesArray`
+   - Add request params
+   - Support Auth0
 - `2.0.0`: Support gatsby-v2
 
 ## How to use
@@ -73,18 +76,20 @@ plugins: [
       // }
       schemaType: postType,
 
-      //Request parameters
+      // Request parameters
+      // Only available from version 2.1.0
       params: {
-        requestParameters: ['some', 'request', 'parameters']
+        per_page: 1
       },
 
-      // Simple authentication, if optional, set it null
+      // Simple authentication, optional
       auth: {
         username: 'myusername',
         password: 'supersecretpassword1234'
       },
 
       // Advanced authentication for Auth0
+      // Only available from version 2.1.0
       auth0Config: {
         method: 'POST',
         url: 'https://MyAuth0Domain/oauth/token',
@@ -124,6 +129,7 @@ plugins: [
       
       // Pass an array containing any number of the entity configuration properties (except verbose, auth0Config),
       // any not specified are defaulted to the general properties that are specified 
+      // Only available from version 2.1.0
       entitiesArray: [{
         url: `http://yourapi.com/api/v1/posts`,
         method: 'post',
