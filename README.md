@@ -155,7 +155,7 @@ configuration options.
 
 This plugin will automatically add a dummy node to initialize Gatsby Graphql Schema, in order to avoid GraphQL errors when some fields are missing.
 
-The dummy node will have `id: 'dummy'` and will probably want to exclude it from `createPage()`:
+The dummy node will have `id: 'dummy'` and you will probably want to exclude it from `createPage()`:
 
 ```jsx
 <ul>
