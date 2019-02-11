@@ -153,10 +153,26 @@ configuration options.
 
 ## Dummy Node
 
-This plugin will automatically add the dummy node for initialize Gatsby Graphql Schema (for handling graphql error if some field is missing). The dummy node will have field `id: 'dummy'`, you should exclude dummy node from `createPage()`
+This plugin will automatically add a dummy node to initialize Gatsby Graphql Schema, in order to avoid GraphQL errors when some fields are missing.
 
+The dummy node will have `id: 'dummy'` and you will probably want to exclude it from `createPage()`:
+
+```jsx
+<ul>
+{data.allPosts.edges.filter(({node}) => node.id !== 'dummy').map(({ node }, index) => (
+   <li key={index}>{node.name}</li>
+))}
+</ul>
 ```
-egdes.node.id === 'dummy'
+
+or filter it out from your GraphQL query:
+
+```graphql
+query {
+    internalAllPosts(filter: {id: {ne: "dummy"}}) {
+        // ...
+    }
+}
 ```
 
 Note: make sure you pass option `schemaType` to make dummy node works.
