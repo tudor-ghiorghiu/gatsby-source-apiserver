@@ -50,7 +50,7 @@ exports.createNodesFromEntities = ({entities, entityType, schemaType, createNode
 
     const node = {
       ...entity,
-      id: createGatsbyId(createNodeId),
+      id: entity.id === 'dummy' ? 'dummy' : createGatsbyId(createNodeId),
       parent: null,
       children: [],
       mediaType: 'application/json',
