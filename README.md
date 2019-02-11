@@ -26,7 +26,7 @@ npm install --save gatsby-source-apiserver@next
 
 ## Change logs
 
-- `2.1.0`:
+- `2.1.1`:
    - Support multiple entities for multiple api servers, pls take a look at attribute `entitiesArray`
    - Add request params
    - Support Auth0
