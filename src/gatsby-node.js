@@ -28,18 +28,19 @@ exports.sourceNodes = async ({
   entityLevel,
   schemaType,
   entitiesArray = [{}],
+  prefetch,
   params = {},
   verboseOutput = false
 }) => {
   //store the attributes in an object to avoid naming conflicts
-  const attributes = {typePrefix, url, method, headers, data, localSave, skipCreateNode, path, auth, params, payloadKey, name, entityLevel, schemaType}
+  const attributes = { typePrefix, url, method, headers, data, localSave, skipCreateNode, path, auth, params, payloadKey, name, entityLevel, schemaType }
   const { createNode } = boundActionCreators;
 
   // If true, output some info as the plugin runs
   let verbose = verboseOutput
 
   let authorization
-  if(auth0Config) {
+  if (auth0Config) {
     console.time('\nAuthenticate user');
     // Make API request.
     try {
@@ -53,6 +54,10 @@ exports.sourceNodes = async ({
     }
     console.timeEnd('\nAuthenticate user');
   }
+
+  let prefetchData;
+  if (prefetch)
+    prefetchData = await fetch({ url: prefetch.url, method: prefetch.method });
 
   await forEachAsync(entitiesArray, async (entity) => {
 
@@ -70,7 +75,7 @@ exports.sourceNodes = async ({
     const params = entity.params ? entity.params : attributes.params
     const payloadKey = entity.payloadKey ? entity.payloadKey : attributes.payloadKey
     const name = entity.name ? entity.name : attributes.name
-    const entityLevel = entity.entityLevel ? entity.entityLevel : attributes.entityLevel 
+    const entityLevel = entity.entityLevel ? entity.entityLevel : attributes.entityLevel
     const schemaType = entity.schemaType ? entity.schemaType : attributes.schemaType
 
     if (authorization) headers.Authorization = authorization
@@ -78,8 +83,13 @@ exports.sourceNodes = async ({
     let entityType = `${typePrefix}${name}`
     // console.log(`entityType: ${entityType}`);
 
+    let callUrl = url;
+    if (prefetchData && typeof url === 'function') {
+      callUrl = url(prefetchData);
+    }
+
     // Fetch the data
-    let entities = await fetch({url, method, headers, data, name, localSave, path, payloadKey, auth, params, verbose, reporter})
+    let entities = await fetch({ url: callUrl, method, headers, data, name, localSave, path, payloadKey, auth, params, verbose, reporter })
 
     // Interpolate entities from nested resposne
     if (entityLevel) {
@@ -87,7 +97,7 @@ exports.sourceNodes = async ({
     }
 
     // If entities is a single object, add to array to prevent issues with creating nodes
-    if(entities && !Array.isArray(entities)) {
+    if (entities && !Array.isArray(entities)) {
       entities = [entities]
     }
 
@@ -95,20 +105,21 @@ exports.sourceNodes = async ({
     // console.log(`entities: `, entities.data);
 
     // Skip node creation if the goal is to only download the data to json files
-    if(skipCreateNode) {
+    if (skipCreateNode) {
       return
     }
 
     // Generate the nodes
     normalize.createNodesFromEntities({
-        entities,
-        entityType,
-        schemaType,
-        createNode,
-        createNodeId,
-        reporter})
-
+      entities,
+      entityType,
+      schemaType,
+      createNode,
+      createNodeId,
+      reporter
     })
+
+  })
 
   // We're done, return.
   return
